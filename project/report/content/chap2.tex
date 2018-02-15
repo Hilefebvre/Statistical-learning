@@ -1,0 +1,107 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Signal Processing Laboratory (LTS5) - EPFL      %
+% LaTeX student report template                   %
+% Authors:                                        %
+%   D. Perdios – dimitris.perdios@epfl.ch         %
+%   A. Besson – adrien.besson@epfl.ch             %
+% v0.1 - 22.12.16                                 %
+% Typeset configuration: pdfLaTeX + Biber         %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Description of the Dataset}
+\label{chap:dataset}
+
+\section{General considerations}
+\label{sec:gen_cons}
+The voice gender dataset\footnote{\url{https://www.kaggle.com/primaryobjects/voicegender}} consists of features extracted from \num{3168} recorded voice samples, collected from male and female speakers. 
+The features have been extracted from the voice recordings using tuneR\footnote{\url{https://cran.r-project.org/web/packages/tuneR/tuneR.pdf}} and seewave\footnote{\url{https://cran.r-project.org/web/packages/seewave/seewave.pdf}}, two acoustic analysis packages of R.
+
+The dataset takes the form of a ``.csv'' file where each row is composed of the following acoustical features:
+\begin{itemize}
+	\item \textbf{meanfreq:} mean frequency (in kHz)
+	\item \textbf{sd:} standard deviation of frequency
+	\item \textbf{median:} median frequency (in kHz)
+	\item \textbf{Q25:} first quartile (in kHz)
+	\item \textbf{Q75:} third quartile (in kHz)
+	\item \textbf{IQR:} interquartile range (in kHz)
+	\item \textbf{skew:} skewness of the spectrum
+	\item \textbf{kurt:} kurtosis
+	\item \textbf{sp.ent:} spectral entropy
+	\item \textbf{sfm:} spectral flatness
+	\item \textbf{mode:} mode frequency
+	\item \textbf{centroid:} frequency centroid 
+	\item \textbf{peakf:} peak frequency (frequency with highest energy)
+	\item \textbf{meanfun:} average of fundamental frequency measured across acoustic signal
+	\item \textbf{minfun:} minimum fundamental frequency measured across acoustic signal
+	\item \textbf{maxfun:} maximum fundamental frequency measured across acoustic signal
+	\item \textbf{meandom:} average of dominant frequency measured across acoustic signal
+	\item \textbf{mindom:} minimum of dominant frequency measured across acoustic signal
+	\item \textbf{maxdom:} maximum of dominant frequency measured across acoustic signal
+	\item \textbf{dfrange:} range of dominant frequency measured across acoustic signal
+	\item \textbf{modindx:} modulation index. Calculated as the accumulated absolute difference between adjacent measurements of fundamental frequencies divided by the frequency range
+	\item \textbf{label:} male or female
+\end{itemize}
+
+The features are all quantitative and represent frequency characteristics of the voices.
+\section{Description of the features}
+\label{sec:feat_desc}
+Before starting the data analysis, it is important to perfectly understand the features involved in the exercise. This will be very useful in a preprocessing step, since it will allow us to remove similar or linear combination of features. It will also be a great asset when it will come to the analysis of the most important features involved in the classification process.
+
+As already pointed out in Section~\ref{sec:gen_cons}, the extracted features are all related to the spectrum. 
+\paragraph{Frequency-related features}
+The feature ``meanfreq'' corresponds to the mean frequency, \ie{} a weighted average of the frequencies present in the spectrum by the amplitude of the spectral components:
+\begin{equation}
+\mu_f = \sum\limits_{i=1}^{N} f_i y_i ,
+\end{equation} 
+where $N$ is the number of frequency components of the spectrum, $f_i$ is the i-th frequency and $y_i$ is the relative amplitude of the i-th component of the spectrum. 
+As described p.\num{163} of the seewave documentation, it is equal to the feature ``centroid''.
+The feature ``sd'' is the standard deviation of the frequencies, calculated as:
+\begin{equation}
+\sigma_f = \sqrt{\sum\limits_{i=1}^{N}y_i \left(f_i-\mu_f\right)^2}.
+\end{equation}
+
+The feature ``median'' is the median frequency calculated as the frequency where the spectrum is divided into frequency intervals of same energy. The calculation of the quartiles ``IQ25'' and ``IQ75'' is based on the same criterion. The interquartile range ``IQR'' is calculated as the difference between the first and the first quartile.
+
+The feature ``mode'' characterizes the dominant frequency of the spectrum, \ie{} the frequency with the highest amplitude. It is very similar to ``peakf'', the peak frequency, which corresponds to the frequency with the highest energy. The fundamental frequency is the lowest frequency of the spectrum.
+
+The features ``meanfun'', ``minfun'', ``maxfun'', ``meandom'', ``maxdom'' and ``mindom'' are calculated as the mean, minimum and maximum values of the fundamental and dominant frequencies respectively, where the mean, maximum and minimum are taken across many time segments which compose a given voice recording. The feature ``dfrange'' is the difference between ``maxdom'' and ``mindom'' and ``modindx'' is the mean absolute difference of the fundamental frequencies.
+
+In addition to the frequency-related features, we can find measures on the shape of the spectrum which may give very interesting additional information. 
+\paragraph{Skewness of the spectrum}
+The skewness of the spectrum is a measure of its asymmetry around the mean frequency. It is calculated as follows:
+\begin{equation}
+\label{eq_skew}
+	S = \frac{1}{\sigma_f^3}\frac{\sum\limits_{i=1}^{N} \left(f_i - \mu_f\right)^3}{N-1}.
+\end{equation}
+From~\eqref{eq_skew}, it is clear that the sign of $S$ gives information of the left or right asymmetry of the spectrum while the absolute value of $S$ gives the strength of the asymmetry. 
+\paragraph{Kurtosis}
+The kurtosis is a measure of the ``tailedness'' of a probability distribution. It is calculated as the fourth order moment of the frequency distribution, described below:
+\begin{equation}
+\label{eq_kurtosis}
+	K = \frac{1}{\sigma_f^4}\frac{\sum\limits_{i=1}^{N} \left(f_i - \mu_f\right)^4}{N-1}.
+\end{equation}
+When $K=3$, the frequency distribution is normal. When $K<3$, the frequency distribution is said to be \textit{platikurtic}, it has fewer components around the means than in the tails compared to a normal distribution. When $K>3$, the distribution is said to be \textit{leptokurtic} and has more components around the mean than in the tails compared to a normal distribution.
+\paragraph{Shannon spectral entropy}
+The Shannon entropy is used to discriminate whether the voice signal is noisy or pure~\cite{Nunes2004}. It is calculated as follows:
+\begin{equation}
+\label{eq:entropy}
+	H = \frac{-\sum\limits_{i=1}^{N} y_i \log_2 \left(y_i\right)}{\log_2 \left(N\right)}.
+\end{equation}
+
+If the signal is pure, then all the energy is concentrated in one frequency component, \ie{} $y_i = \delta_{ij}$ and $H=0$. If the signal is a white noise, then $y_i = 1/N, \; \forall i \in \left\lbrace 1,...,N \right\rbrace$ and $H=1$.
+\paragraph{Spectral flatness}
+The spectral flatness is rather similar to the spectral entropy. It is measured as the ratio between the geometric mean and the arithmetic mean of the spectral components:
+\begin{equation}
+\label{eq:spec_flat}
+	F = N \frac{\sqrt[N]{\prod\limits_{i=1}^{N} y_i}}{\sum \limits_{i=1}^{N} y_i}.
+\end{equation}
+In case of a white noise, the spectrum is flat and $H=1$. In case of a pure tone, the geometrical mean is equal to zero and $H=0$.
+
+\section{Cleaning the dataset}
+\label{sec_cleaning_dataset}
+From the description of the features given in Section~\ref{sec:feat_desc}, a first cleaning of the dataset may be achieved before starting the analysis.
+Indeed, several features are exactly the same or a linear combination of other features:
+\begin{itemize}
+	\item The features ``meanfreq'' and ``centroid'' are exactly similar. So ``centroid'' has been removed;
+	\item The following relationship holds: ``IQR'' $=$ ``Q75'' $-$ ``Q25''. ``IQR'' has been removed;
+	\item The following relationship holds: ``dfrange'' $=$ ``maxdom'' $-$ ``mindom''. ``dfrange'' has been removed.
+\end{itemize}
